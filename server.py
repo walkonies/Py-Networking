@@ -7,19 +7,19 @@ NAME = "ALEX'S SERVER"
 HEADER = 64
 PORT = 5050
 SERVER = soc.gethostbyname(soc.gethostname())
-ADDR = (SERVER, PORT)
+
 BUFFER_SIZE = 1024
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
 TIMEOUT = 10
 
-server = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
-server.bind(ADDR)
 threads = []
 running = False
+server = None
 
 def handleClient(conn, addr):
 	print(f'[NEW CONNECTION] {addr} connected.')
+	#sendAck(conn, msg=f'CONNECTED TO {NAME}')
 	
 	connected = True
 	while connected:
@@ -84,15 +84,12 @@ def displayMsg(addr, msg):
 
 def shutdown():
 	print(f'[SHUTTING DOWN] {NAME}')
-	global running
-	running = False
-	time.sleep(1)
 	server.close()
 
-
-def start():
-	global running
+def start(server):
+	global running, server
 	running = True
+	server = server
 	server.listen()
 	sleeping = False
 
@@ -110,8 +107,13 @@ def main():
 		global PORT
 		PORT = int(sys.argv[1])
 		print(PORT)
+
+	ADDR = (SERVER, PORT)
+	server = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
+	server.bind(ADDR)
+
 	print(f'[STARTING] {PORT} {NAME} IS RUNNING...')
-	start()
+	start(server)
 
 if __name__ == '__main__':
 	main()
