@@ -21,7 +21,6 @@ server = None
 def handleClient(conn, addr):
 	user = getUserName(conn, addr)
 	print(f'[NEW CONNECTION] {addr} connected.')
-	#sendAck(conn, msg=f'CONNECTED TO {NAME}')
 	
 	connected = True
 	while connected:
@@ -78,6 +77,7 @@ def start(s):
 		threads.append(thread)
 
 		connections = threading.activeCount()-1
+		sendAck(conn, msg=f'CONNECTED TO {NAME}')
 		print(f'[ACTIVE CONNECTIONS] {connections}')
 
 def main():
