@@ -12,10 +12,8 @@ BUFFER_SIZE = 1024
 SERVER = soc.gethostbyname(soc.gethostname())  # local IP address
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
-USERS = pd.read_csv('users.csv')
 
 threads = []
-running = False
 server = None
 
 def handleClient(client):
@@ -37,14 +35,14 @@ def handleMessage(client, size):
 		return False
 
 	sendAck(client.conn)
-	displayMsg(client, msg)
+	displayMsg(client.name, msg)
 	return True
 
 def newConnection(conn, addr):
 	user = getUserName(addr)
 	if not user:
-		sendAck('[NEW USER] ENTER NAME')
-		getNewUser(addr)
+		sendAck(conn, '[NEW USER] ENTER NAME')
+		name = getNewUser(conn, addr)
 	else:
 		sendAck(f'[WELCOME] {user}')
 
@@ -64,16 +62,14 @@ def shutdown():
 	print(f'[SHUTTING DOWN] {NAME}')
 	server.close()
 
-def start(s):
-	global running, server
+def start():
 	running = True
-	server = s
 	server.listen()
 	sleeping = False
 
 	while running:
 		conn, addr = server.accept()
-		thread = threading.Thread(target=handleClient, args=(conn,addr))
+		thread = threading.Thread(target=newConnection, args=(conn,addr))
 		thread.start()
 		threads.append(thread)
 
@@ -88,11 +84,13 @@ def main():
 		print(PORT)
 
 	ADDR = (SERVER, PORT)
-	server = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
-	server.bind(ADDR)
+	serv = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
+	serv.bind(ADDR)
+	global server
+	server = serv
 
 	print(f'[STARTING] {NAME} IS RUNNING...\tPORT:{PORT}')
-	start(server)
+	start()
 
 if __name__ == '__main__':
 	main()
