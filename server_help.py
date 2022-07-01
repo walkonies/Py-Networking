@@ -1,4 +1,5 @@
 TIMEOUT = 10
+USERS = 'users.csv'
 
 def systemSleep():
 	sleeping = False
@@ -23,5 +24,29 @@ def systemSleep():
 		print('[AWAKE]')
 		sleeping = False
 
-def getUserName():
+def readCSV(file):
+	data = {}
+	sep = ','
+	with open(file, 'r') as f:
+		file_data = f.read().split('\n')
+		file_data.pop(-1) # remove newline at EOF
+	
+	for line in file_data:
+		addr, name = line.split(sep)
+		data[addr] = name
+	return data
+
+def getUserName(addr):
+	users = readCSV(USERS)
+	if addr in users.keys():
+		return users[addr]
+	else:
+		return None
+
+def setUserName(addr):
+	pass
+
+
+
+if __name__ == '__main__':
 	pass
