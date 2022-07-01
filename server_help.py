@@ -14,8 +14,8 @@ def sendAck(conn, msg=None):
 	msg = msg.encode(FORMAT)
 	conn.send(msg)
 
-def displayMsg(client, msg):
-	print(f'[{client.name}] {msg}')
+def displayMsg(user, msg):
+	print(f'[{user}] {msg}')
 
 def systemSleep():
 	sleeping = False
@@ -51,17 +51,23 @@ def readCSV(file):
 		data[addr] = name
 	return data
 
+def updateCSV(file, data):
+	sep = ','
+	line = sep.join(data)
+	with open(file, 'a') as f:
+		f.write(line)	
+
 def getUserName(addr):
 	users = readCSV(USERS)
+	name = None
 	if addr in users.keys():
-		return users[addr]
-	else:
-		return None
+		name = users[addr]
+	return name
 
-def getNewUser(addr):
-
-
-
+def getNewUser(conn, addr):
+	name = conn.recv(HEADER).decode(FORMAT)
+	updateCSV(USERS, (addr, name))
+	return name
 
 if __name__ == '__main__':
 	pass
