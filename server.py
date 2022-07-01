@@ -12,12 +12,18 @@ BUFFER_SIZE = 1024
 SERVER = soc.gethostbyname(soc.gethostname())  # local IP address
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
+CONNECT = '!CONNECT'
+
 
 threads = []
 server = None
 
-def handleClient(client):
+def connectClient(conn, addr):
+	client = getNewConnection(conn, addr)
 	print(f'[NEW CONNECTION] {client.name}:{client.addr} connected.')
+	handleClient(client)
+
+def handleClient(client):
 	connected = True
 	while connected:
 		mesg_length = client.conn.recv(HEADER).decode(FORMAT)
@@ -31,32 +37,38 @@ def handleMessage(client, size):
 	msg = client.conn.recv(size).decode(FORMAT)
 
 	if msg == DISCONNECT:
-		sendAck(client.conn, msg='DISCONNECTED')
+		sendAck(client.conn, msg='[DISCONNECTED]')
 		return False
+	if msg == CONNECT:
+		sendAck(client.conn, msg=f'[CONNECTED] TO {NAME}')
+		return True
 
 	sendAck(client.conn)
 	displayMsg(client.name, msg)
 	return True
 
-def newConnection(conn, addr):
+def getNewConnection(conn, addr):
 	user = getUserName(addr)
 	if not user:
 		sendAck(conn, '[NEW USER] ENTER NAME')
-		name = getNewUser(conn, addr)
+		user = getNewUser(conn, addr)
 	else:
-		sendAck(f'[WELCOME] {user}')
+		sendAck(conn, f'[WELCOME] {user}')
 
-	client = Client(conn, addr, name)
-	handleClient(client)
+	client = Client(conn, addr, user)
+	return client
 
 def disconnectClient(client):
-	print(f'[DISCONNECT] {client.addr[0]}')
+	print(f'[DISCONNECT] {client.name}--{client.addr}')
 	client.conn.close()
 
 	connections = threading.activeCount()-2 # one for main one for this thread
 	print(f'[ACTIVE CONNECTIONS] {connections}')
-	if connections < 1:
-		systemSleep()
+
+	# To do: add sleep to shutdown
+
+	#if connections < 1:
+		#systemSleep()
 
 def shutdown():
 	print(f'[SHUTTING DOWN] {NAME}')
@@ -69,12 +81,11 @@ def start():
 
 	while running:
 		conn, addr = server.accept()
-		thread = threading.Thread(target=newConnection, args=(conn,addr))
+		thread = threading.Thread(target=connectClient, args=(conn,addr[0]))
 		thread.start()
 		threads.append(thread)
 
 		connections = threading.activeCount()-1
-		sendAck(conn, msg=f'CONNECTED TO {NAME}')
 		print(f'[ACTIVE CONNECTIONS] {connections}')
 
 def main():
@@ -89,7 +100,7 @@ def main():
 	global server
 	server = serv
 
-	print(f'[STARTING] {NAME} IS RUNNING...\tPORT:{PORT}')
+	print(f'[STARTING] {NAME} IS RUNNING...\tADDR:{SERVER} PORT:{PORT}')
 	start()
 
 if __name__ == '__main__':

@@ -1,10 +1,11 @@
 TIMEOUT = 10
 USERS = 'users.csv'
 FORMAT = 'utf-8'
+HEADER = 64
 
 class Client:
 	def __init__(self, conn, addr, name):
-		self.conn = conne
+		self.conn = conn
 		self.addr = addr
 		self.name = name
 
@@ -53,9 +54,11 @@ def readCSV(file):
 
 def updateCSV(file, data):
 	sep = ','
+	data = list(data)
+
 	line = sep.join(data)
 	with open(file, 'a') as f:
-		f.write(line)	
+		f.write(line + '\n')	
 
 def getUserName(addr):
 	users = readCSV(USERS)
@@ -65,7 +68,7 @@ def getUserName(addr):
 	return name
 
 def getNewUser(conn, addr):
-	name = conn.recv(HEADER).decode(FORMAT)
+	name = conn.recv(HEADER).decode(FORMAT).rstrip()
 	updateCSV(USERS, (addr, name))
 	return name
 
