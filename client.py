@@ -4,13 +4,9 @@ import sys
 HEADER = 64
 PORT = 5050
 SERVER = '192.168.1.198'
-ADDR = (SERVER, PORT)
 BUFFER_SIZE = 1024
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
-
-client = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
-client.connect(ADDR)
 
 def send(client, msg):
 	message = msg.encode(FORMAT)
@@ -26,7 +22,7 @@ def send(client, msg):
 	if resp:
 		print(resp.decode(FORMAT))
 
-def chat():
+def chat(client):
 	msg = input('msg: ')
 	if msg == 'quit':
 		send(client, DISCONNECT)
@@ -34,6 +30,17 @@ def chat():
 	send(client, msg)
 	return True
 
+def connectClient(addr):
+	server, port = addr
+	print(f'[CONNECTING] {server} PORT:{port}')
+	client = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
+	client.connect(addr)
+	return client
+
+def start(client):
+	running = True
+	while running:
+		running = chat(client)
 
 def main():
 	if len(sys.argv) > 1:
@@ -41,11 +48,11 @@ def main():
 		PORT = int(sys.argv[1])
 		print(PORT)
 
-	running = True
-	while running:
-		running = chat()
-		
+	ADDR = (SERVER, PORT)
 
+	client = connectClient(ADDR)
+	start(client)
+		
 if __name__ == '__main__':
 	main()
 
