@@ -2,22 +2,24 @@ import socket as soc
 import threading
 import time
 import sys
+import pandas as pd
+from server_help import *
 
 NAME = "ALEX'S SERVER"
 HEADER = 64
 PORT = 5050
-SERVER = soc.gethostbyname(soc.gethostname())
-
 BUFFER_SIZE = 1024
+SERVER = soc.gethostbyname(soc.gethostname())  # local IP address
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
-TIMEOUT = 10
+USERS = pd.read_csv('users.csv')
 
 threads = []
 running = False
 server = None
 
 def handleClient(conn, addr):
+	user = getUserName(conn, addr)
 	print(f'[NEW CONNECTION] {addr} connected.')
 	#sendAck(conn, msg=f'CONNECTED TO {NAME}')
 	
@@ -25,8 +27,8 @@ def handleClient(conn, addr):
 	while connected:
 		mesg_length = conn.recv(HEADER).decode(FORMAT)
 		if mesg_length:
-			print(f'[INCOMING] {int(mesg_length)}bytes')
 			mesg_length = int(mesg_length)
+			print(f'[INCOMING] {mesg_length}bytes')
 			msg = conn.recv(mesg_length).decode(FORMAT)
 
 			if msg == DISCONNECT:
@@ -49,30 +51,6 @@ def disconnectClient(conn, addr):
 	if connections < 1:
 		systemSleep()
 
-def systemSleep():
-	sleeping = False
-	connections = threading.activeCount()-2
-	while connections < 1:
-		if not sleeping:
-			sleeping = True
-			print(f'[SLEEPING] {TIMEOUT}s')
-			sleep = time.time() + TIMEOUT
-		else:
-			timer = sleep-time.time()
-			if timer < 0:
-				running = False
-				shutdown()
-				break
-			elif int(timer) == TIMEOUT//2:
-				print(f'[SLEEPING] {TIMEOUT//2}s')
-		time.sleep(1)
-		connections = threading.activeCount()-2
-	
-	else:
-		print('[AWAKE]')
-		sleeping = False
-
-
 def sendAck(conn, msg=None):
 	if not msg:
 		msg = 'Message received!'
@@ -86,10 +64,10 @@ def shutdown():
 	print(f'[SHUTTING DOWN] {NAME}')
 	server.close()
 
-def start(server):
+def start(s):
 	global running, server
 	running = True
-	server = server
+	server = s
 	server.listen()
 	sleeping = False
 
@@ -112,7 +90,7 @@ def main():
 	server = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
 	server.bind(ADDR)
 
-	print(f'[STARTING] {PORT} {NAME} IS RUNNING...')
+	print(f'[STARTING] {NAME} IS RUNNING...\tPORT:{PORT}')
 	start(server)
 
 if __name__ == '__main__':
