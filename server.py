@@ -18,46 +18,47 @@ threads = []
 running = False
 server = None
 
-def handleClient(conn, addr):
-	user = getUserName(conn, addr)
-	print(f'[NEW CONNECTION] {addr} connected.')
-	
+def handleClient(client):
+	print(f'[NEW CONNECTION] {client.name}:{client.addr} connected.')
 	connected = True
 	while connected:
-		mesg_length = conn.recv(HEADER).decode(FORMAT)
+		mesg_length = client.conn.recv(HEADER).decode(FORMAT)
 		if mesg_length:
 			mesg_length = int(mesg_length)
-			print(f'[INCOMING] {mesg_length}bytes')
-			msg = conn.recv(mesg_length).decode(FORMAT)
+			connected = handleMessage(client, mesg_length)
+	disconnectClient(client)
 
-			if msg == DISCONNECT:
-				connected = False
-				sendAck(conn, msg='DISCONNECTED')
-				break
+def handleMessage(client, size):
+	print(f'[INCOMING] {size}bytes')
+	msg = client.conn.recv(size).decode(FORMAT)
 
-			sendAck(conn)
-			displayMsg(addr, msg)
+	if msg == DISCONNECT:
+		sendAck(client.conn, msg='DISCONNECTED')
+		return False
 
-	disconnectClient(conn, addr)
+	sendAck(client.conn)
+	displayMsg(client, msg)
+	return True
 
-def disconnectClient(conn, addr):
-	print(f'[DISCONNECT] {addr[0]}')
-	conn.close()
+def newConnection(conn, addr):
+	user = getUserName(addr)
+	if not user:
+		sendAck('[NEW USER] ENTER NAME')
+		getNewUser(addr)
+	else:
+		sendAck(f'[WELCOME] {user}')
+
+	client = Client(conn, addr, name)
+	handleClient(client)
+
+def disconnectClient(client):
+	print(f'[DISCONNECT] {client.addr[0]}')
+	client.conn.close()
 
 	connections = threading.activeCount()-2 # one for main one for this thread
 	print(f'[ACTIVE CONNECTIONS] {connections}')
-	
 	if connections < 1:
 		systemSleep()
-
-def sendAck(conn, msg=None):
-	if not msg:
-		msg = 'Message received!'
-	msg = msg.encode(FORMAT)
-	conn.send(msg)
-
-def displayMsg(addr, msg):
-	print(f'[{addr[0]}] {msg}')
 
 def shutdown():
 	print(f'[SHUTTING DOWN] {NAME}')
