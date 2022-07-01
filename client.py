@@ -4,9 +4,11 @@ import sys
 HEADER = 64
 PORT = 5050
 SERVER = '192.168.1.198'
+WORK = '104.51.152.244'
 BUFFER_SIZE = 1024
 FORMAT = 'utf-8'
 DISCONNECT = '!DISCONNECT'
+CONNECT = '!CONNECT'
 
 def send(client, msg):
 	message = msg.encode(FORMAT)
@@ -18,9 +20,6 @@ def send(client, msg):
 	client.send(bsize)
 	client.send(message)
 
-	resp = client.recv(BUFFER_SIZE)
-	if resp:
-		print(resp.decode(FORMAT))
 
 def chat(client):
 	msg = input('msg: ')
@@ -35,11 +34,17 @@ def connectClient(addr):
 	print(f'[CONNECTING] {server} PORT:{port}')
 	client = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
 	client.connect(addr)
+	send(client, CONNECT)
+	client.recv(HEADER)
 	return client
 
 def start(client):
 	running = True
 	while running:
+		resp = client.recv(BUFFER_SIZE)
+		if resp:
+			print(resp.decode(FORMAT))
+
 		running = chat(client)
 
 def main():
@@ -48,7 +53,7 @@ def main():
 		PORT = int(sys.argv[1])
 		print(PORT)
 
-	ADDR = (SERVER, PORT)
+	ADDR = (WORK, PORT)
 
 	client = connectClient(ADDR)
 	start(client)
