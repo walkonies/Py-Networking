@@ -1,5 +1,21 @@
 TIMEOUT = 10
 USERS = 'users.csv'
+FORMAT = 'utf-8'
+
+class Client:
+	def __init__(self, conn, addr, name):
+		self.conn = conne
+		self.addr = addr
+		self.name = name
+
+def sendAck(conn, msg=None):
+	if not msg:
+		msg = 'Message received!'
+	msg = msg.encode(FORMAT)
+	conn.send(msg)
+
+def displayMsg(client, msg):
+	print(f'[{client.name}] {msg}')
 
 def systemSleep():
 	sleeping = False
@@ -12,7 +28,6 @@ def systemSleep():
 		else:
 			timer = sleep-time.time()
 			if timer < 0:
-				running = False
 				shutdown()
 				break
 			elif int(timer) == TIMEOUT//2:
@@ -43,8 +58,8 @@ def getUserName(addr):
 	else:
 		return None
 
-def setUserName(addr):
-	pass
+def getNewUser(addr):
+
 
 
 
